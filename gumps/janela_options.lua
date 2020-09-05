@@ -7225,9 +7225,110 @@ function window:CreateFrame5()
 		frame5.customLeftTextButton:SetPushedTexture ([[Interface\Glues\LOGIN\Glues-CheckBox-Check]] or [[Interface\Buttons\UI-GroupLoot-Pass-Up]])
 		frame5.customLeftTextButton:GetNormalTexture():SetDesaturated (true)
 		frame5.customLeftTextButton.tooltip = Loc ["STRING_OPTIONS_RESET_TO_DEFAULT"]
-		
+
+		--overall custom text
+        --text entry
+        g:NewLabel (frame5, _, "$parentCustomOverallRightText2Label", "customOverallRightTextEntryLabel", Loc ["STRING_OPTIONS_BARLEFTTEXTCUSTOM2"], "GameFontHighlightLeft")
+        g:NewTextEntry (frame5, _, "$parentCustomOverallRightTextEntry", "customOverallRightTextEntry", 180, TEXTENTRY_HEIGHT, nil, nil, nil, nil, nil, options_dropdown_template)
+        frame5.customOverallRightTextEntry:SetPoint ("left", frame5.customOverallRightTextEntryLabel, "right", 2, -1)
+
+        frame5.customOverallRightTextEntry:SetHook ("OnTextChanged", function (self, byUser)
+        
+            if (not frame5.customOverallRightTextEntry.text:find ("{func")) then
+            
+                if (frame5.customOverallRightTextEntry.changing and not byUser) then
+                    frame5.customOverallRightTextEntry.changing = false
+                    return
+                elseif (frame5.customOverallRightTextEntry.changing and byUser) then
+                    frame5.customOverallRightTextEntry.changing = false
+                end
+
+                if (byUser) then
+                    local t = frame5.customOverallRightTextEntry.text
+                    t = t:gsub ("||", "|")
+
+                    local instance = _G.DetailsOptionsWindow.instance
+                    instance:SetBarTextSettings (nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, t)
+                    
+                    if (_detalhes.options_group_edit and not DetailsOptionsWindow.loading_settings) then
+                        for _, this_instance in ipairs (instance:GetInstanceGroup()) do
+                            if (this_instance ~= instance) then
+                                this_instance:SetBarTextSettings (nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, t)
+                            end
+                        end
+                    end
+                    
+                else
+                    local t = frame5.customOverallRightTextEntry.text
+                    t = t:gsub ("|", "||")
+                    frame5.customOverallRightTextEntry.changing = true
+                    frame5.customOverallRightTextEntry.text = t
+                end
+            end
+        end)
+        
+        frame5.customOverallRightTextEntry:SetHook ("OnChar", function()
+            if (frame5.customOverallRightTextEntry.text:find ("{func")) then
+                GameCooltip:Reset()
+                GameCooltip:AddLine ("'func' keyword found, auto update disabled.")
+                GameCooltip:Show (frame5.customOverallRightTextEntry.widget)
+            end
+        end)
+
+        frame5.customOverallRightTextEntry:SetHook ("OnEnterPressed", function()
+            local t = frame5.customOverallRightTextEntry.text
+            t = t:gsub ("||", "|")
+            
+            local instance = _G.DetailsOptionsWindow.instance
+            instance:SetBarTextSettings (nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, t)
+            
+            if (_detalhes.options_group_edit and not DetailsOptionsWindow.loading_settings) then
+                for _, this_instance in ipairs (instance:GetInstanceGroup()) do
+                    if (this_instance ~= instance) then
+                        this_instance:SetBarTextSettings (nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, t)
+                    end
+                end
+            end
+
+        end)
+        frame5.customOverallRightTextEntry:SetHook ("OnEscapePressed", function()
+            frame5.customOverallRightTextEntry:ClearFocus()
+            return true
+        end)
+
+        window:CreateLineBackground2 (frame5, "customOverallRightTextEntry", "customOverallRightTextEntryLabel", Loc ["STRING_OPTIONS_BARLEFTTEXTCUSTOM2_DESC"])
+        frame5.customOverallRightTextEntry.text = instance.row_info.textOverallR_custom_text
+        
+        local callback = function (text)
+            frame5.customOverallRightTextEntry.text = text
+            frame5.customOverallRightTextEntry:PressEnter()
+            _detalhes:SendOptionsModifiedEvent (DetailsOptionsWindow.instance)
+        end
+        g:NewButton (frame5.customOverallRightTextEntry, _, "$parentOpenTextBarEditorButton", "TextBarEditorButton", 22, 22, function()
+            DetailsWindowOptionsBarTextEditor:Open (frame5.customOverallRightTextEntry.text, callback, _G.DetailsOptionsWindow, _detalhes.instance_defaults.row_info.textOverallR_custom_text)
+        end)
+        frame5.TextBarEditorButton = frame5.customOverallRightTextEntry.TextBarEditorButton
+        frame5.TextBarEditorButton:SetPoint ("left", frame5.customOverallRightTextEntry, "right", 2, 1)
+        frame5.TextBarEditorButton:SetNormalTexture ([[Interface\HELPFRAME\OpenTicketIcon]])
+        frame5.TextBarEditorButton:SetHighlightTexture ([[Interface\HELPFRAME\OpenTicketIcon]])
+        frame5.TextBarEditorButton:SetPushedTexture ([[Interface\HELPFRAME\OpenTicketIcon]])
+        frame5.TextBarEditorButton:GetNormalTexture():SetDesaturated (true)
+        frame5.TextBarEditorButton.tooltip = Loc ["STRING_OPTIONS_OPEN_ROWTEXT_EDITOR"]
+        
+        g:NewButton (frame5.customOverallRightTextEntry, _, "$parentResetCustomOverallRightTextButton", "customOverallRightTextButton", 20, 20, function()
+            frame5.customOverallRightTextEntry.text = _detalhes.instance_defaults.row_info.textOverallR_custom_text
+            frame5.customOverallRightTextEntry:PressEnter()
+        end)
+        frame5.customOverallRightTextButton = frame5.customOverallRightTextEntry.customOverallRightTextButton
+        frame5.customOverallRightTextButton:SetPoint ("left", frame5.TextBarEditorButton, "right", 0, 0)
+        frame5.customOverallRightTextButton:SetNormalTexture ([[Interface\Glues\LOGIN\Glues-CheckBox-Check]] or [[Interface\Buttons\UI-GroupLoot-Pass-Down]])
+        frame5.customOverallRightTextButton:SetHighlightTexture ([[Interface\Glues\LOGIN\Glues-CheckBox-Check]] or [[Interface\Buttons\UI-GROUPLOOT-PASS-HIGHLIGHT]])
+        frame5.customOverallRightTextButton:SetPushedTexture ([[Interface\Glues\LOGIN\Glues-CheckBox-Check]] or [[Interface\Buttons\UI-GroupLoot-Pass-Up]])
+        frame5.customOverallRightTextButton:GetNormalTexture():SetDesaturated (true)
+        frame5.customOverallRightTextButton.tooltip = Loc ["STRING_OPTIONS_RESET_TO_DEFAULT"]
+
 	--> total dps percent bracket separator
-	
+
 		-- total
 		g:NewSwitch (frame5, _, "$parentRightTextShowTotalSlider", "RightTextShowTotalSlider", 60, 20, _, _, instance.row_info.textR_show_data [1], nil, nil, nil, nil, options_switch_template)
 		g:NewLabel (frame5, _, "$parentRightTextShowTotalLabel", "RightTextShowTotalLabel", Loc ["STRING_OPTIONS_TEXT_SHOW_TOTAL"], "GameFontHighlightLeft")
@@ -7293,7 +7394,30 @@ function window:CreateFrame5()
 		end
 
 		window:CreateLineBackground2 (frame5, "RightTextShowPercentSlider", "RightTextShowPercentLabel", Loc ["STRING_OPTIONS_TEXT_SHOW_PERCENT_DESC"])
+
+		--overall
+		g:NewSwitch (frame5, _, "$parentRightTextShowOverAllSlider", "RightTextShowOverAllSlider", 60, 20, _, _, instance.row_info.textR_show_data [4], nil, nil, nil, nil, options_switch_template)
+		g:NewLabel (frame5, _, "$parentRightTextShowOverAllLabel", "RightTextShowOverAllLabel", Loc ["STRING_OPTIONS_TEXT_SHOW_OVERALL"], "GameFontHighlightLeft")
 		
+		frame5.RightTextShowOverAllSlider:SetPoint ("left", frame5.RightTextShowOverAllLabel, "right", 2)
+		frame5.RightTextShowOverAllSlider:SetAsCheckBox()
+		frame5.RightTextShowOverAllSlider.OnSwitch = function (self, instance, value)
+			instance:SetBarRightTextSettings (nil, nil, nil, nil, nil, value)
+			
+			if (_detalhes.options_group_edit and not DetailsOptionsWindow.loading_settings) then
+				for _, this_instance in ipairs (instance:GetInstanceGroup()) do
+					if (this_instance ~= instance) then
+						this_instance:SetBarRightTextSettings (nil, nil, nil, nil, nil, value)
+					end
+				end
+			end
+			
+			_detalhes:SendOptionsModifiedEvent (DetailsOptionsWindow.instance)
+		end
+		
+		window:CreateLineBackground2 (frame5, "RightTextShowOverAllSlider", "RightTextShowOverAllLabel", Loc ["STRING_OPTIONS_TEXT_SHOW_OVERALL_DESC"])
+		
+
 		--brackets
 		local onSelectBracket = function (_, instance, value)
 			instance:SetBarRightTextSettings (nil, nil, nil, value)
@@ -7416,6 +7540,9 @@ function window:CreateFrame5()
 			
 			{"cutomRightTextLabel", 9, true},
 			{"cutomRightTextEntryLabel", 10},
+
+			{"RightTextShowOverAllLabel", 11},
+			{"customOverallRightTextEntryLabel", 12},	
 		}
 	
 		window:arrange_menu (frame5, right_side, window.right_start_at, window.top_start_at)
@@ -11772,7 +11899,10 @@ end --> if not window
 		
 		local text = editing_instance.row_info.textR_custom_text
 		_G.DetailsOptionsWindow5CutomRightTextEntry.MyObject:SetText (text)
-		
+
+		local text = editing_instance.row_info.textOverallR_custom_text
+		_G.DetailsOptionsWindow5CustomOverallRightTextEntry.MyObject:SetText (text)
+
 		_G.DetailsOptionsWindow5PositionNumberSlider.MyObject:SetFixedParameter (editing_instance)
 		_G.DetailsOptionsWindow5PositionNumberSlider.MyObject:SetValue (editing_instance.row_info.textL_show_number)
 
@@ -11784,12 +11914,14 @@ end --> if not window
 		_G.DetailsOptionsWindow5RightTextShowTotalSlider.MyObject:SetFixedParameter (editing_instance)
 		_G.DetailsOptionsWindow5RightTextShowPSSlider.MyObject:SetFixedParameter (editing_instance)
 		_G.DetailsOptionsWindow5RightTextShowPercentSlider.MyObject:SetFixedParameter (editing_instance)
+		_G.DetailsOptionsWindow5RightTextShowOverAllSlider.MyObject:SetFixedParameter (editing_instance)
 		
 		_G.DetailsOptionsWindow5BracketDropdown.MyObject:Select (editing_instance.row_info.textR_bracket)
 		_G.DetailsOptionsWindow5SeparatorDropdown.MyObject:Select (editing_instance.row_info.textR_separator)
 		_G.DetailsOptionsWindow5RightTextShowTotalSlider.MyObject:SetValue (editing_instance.row_info.textR_show_data [1])
 		_G.DetailsOptionsWindow5RightTextShowPSSlider.MyObject:SetValue (editing_instance.row_info.textR_show_data [2])
 		_G.DetailsOptionsWindow5RightTextShowPercentSlider.MyObject:SetValue (editing_instance.row_info.textR_show_data [3])
+		_G.DetailsOptionsWindow5RightTextShowOverAllSlider.MyObject:SetValue (editing_instance.row_info.textR_show_data [4])		
 
 		_G.DetailsOptionsWindow5UseClassColorsLeftTextSlider.MyObject:SetFixedParameter (editing_instance)
 		_G.DetailsOptionsWindow5UseClassColorsLeftTextSlider.MyObject:SetValue (editing_instance.row_info.textL_class_colors)

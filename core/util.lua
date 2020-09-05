@@ -517,7 +517,7 @@
 	local function_cache = {}
 	local arguments_cache = {}
 	local parameters_cache = {}
-	
+
 	local replace_arg = function (i)
 		return arguments_cache [tonumber(i)]
 	end
@@ -553,7 +553,22 @@
 		
 		return (str:gsub ("{data(%d+)}", replace_arg):gsub ("{func(.-)}", run_function)) 
 	end
-	
+
+	function _detalhes.string.replace_overall (str, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10)
+		arguments_cache [1] = v1
+		arguments_cache [2] = v2
+		arguments_cache [3] = v3
+		arguments_cache [4] = v4
+		arguments_cache [5] = v5
+		arguments_cache [6] = v6		
+		parameters_cache [1] = v7
+		parameters_cache [2] = v8
+		parameters_cache [3] = v9
+		parameters_cache [4] = v10
+
+		return (str:gsub ("{data(%d+)}", replace_arg):gsub ("{func(.-)}", run_function)) 
+	end
+
 	--> remove a index from a hash table
 	function _detalhes:tableRemove (tabela, indexName)
 		local newtable = {}

@@ -199,6 +199,8 @@ _detalhes.instance_defaults = {
 			--right text customization
 				textR_enable_custom_text = false,
 				textR_custom_text = "{data1} ({data2}, {data3}%)",
+			--overall right text customization
+				textOverallR_custom_text = "{data1}({data2}) {data3}({data4}) {data5}({data6}))",				
 			--right text show which infos
 				textR_show_data = {true, true, true},
 				textR_bracket = "(",

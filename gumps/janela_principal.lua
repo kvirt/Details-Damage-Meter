@@ -4131,7 +4131,7 @@ function gump:CriaNovaBarra (instancia, index)
 	return new_row
 end
 
-function _detalhes:SetBarTextSettings (size, font, fixedcolor, leftcolorbyclass, rightcolorbyclass, leftoutline, rightoutline, customrighttextenabled, customrighttext, percentage_type, showposition, customlefttextenabled, customlefttext, smalloutline_left, smalloutlinecolor_left, smalloutline_right, smalloutlinecolor_right, translittext)
+function _detalhes:SetBarTextSettings (size, font, fixedcolor, leftcolorbyclass, rightcolorbyclass, leftoutline, rightoutline, customrighttextenabled, customrighttext, percentage_type, showposition, customlefttextenabled, customlefttext, smalloutline_left, smalloutlinecolor_left, smalloutline_right, smalloutlinecolor_right, translittext, customoverallrighttext)
 	
 	--> size
 	if (size) then
@@ -4205,7 +4205,11 @@ function _detalhes:SetBarTextSettings (size, font, fixedcolor, leftcolorbyclass,
 	if (customrighttext) then
 		self.row_info.textR_custom_text = customrighttext
 	end
-	
+
+	if (customoverallrighttext) then
+		self.row_info.textOverallR_custom_text = customoverallrighttext
+	end
+		
 	--> percent type
 	if (percentage_type) then
 		self.row_info.percent_type = percentage_type
@@ -4429,7 +4433,7 @@ function _detalhes:GetBarSeparator()
 	return separators [self.row_info.textR_separator]
 end
 
-function _detalhes:SetBarRightTextSettings (total, persecond, percent, bracket, separator)
+function _detalhes:SetBarRightTextSettings (total, persecond, percent, bracket, separator, overall)
 
 	if (type (total) == "boolean") then
 		self.row_info.textR_show_data [1] = total
@@ -4440,7 +4444,10 @@ function _detalhes:SetBarRightTextSettings (total, persecond, percent, bracket, 
 	if (type (percent) == "boolean") then
 		self.row_info.textR_show_data [3] = percent
 	end
-	
+	if (type (overall) == "boolean") then
+		self.row_info.textR_show_data [4] = overall
+	end
+
 	if (bracket) then
 		self.row_info.textR_bracket = bracket
 	end

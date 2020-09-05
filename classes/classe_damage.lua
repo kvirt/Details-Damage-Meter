@@ -32,6 +32,7 @@
 	local GetSpellInfo = GetSpellInfo --api local
 	local _GetSpellInfo = _detalhes.getspellinfo --details api
 	local _string_replace = _detalhes.string.replace --details api
+	local _string_replace_overall = _detalhes.string.replace_overall --details api
 
 	--show more information about spells
 	local debugmode = false
@@ -2348,7 +2349,6 @@ local actor_class_color_r, actor_class_color_g, actor_class_color_b
 -- ~atualizar ~barra ~update
 function atributo_damage:AtualizaBarra (instancia, barras_container, qual_barra, lugar, total, sub_atributo, forcar, keyName, combat_time, percentage_type, use_animations, bars_show_data, bars_brackets, bars_separator)
 							-- inst�ncia, container das barras, qual barra, coloca��o, total?, sub atributo, for�ar refresh, key
-	
 	local esta_barra = barras_container [qual_barra] --> pega a refer�ncia da barra na janela
 	
 	if (not esta_barra) then
@@ -2366,7 +2366,6 @@ function atributo_damage:AtualizaBarra (instancia, barras_container, qual_barra,
 
 	local damage_total = self.total --> total de dano que este jogador deu
 	local dps
-	
 	local porcentagem
 	local esta_porcentagem
 	
@@ -2415,27 +2414,108 @@ function atributo_damage:AtualizaBarra (instancia, barras_container, qual_barra,
 		local formated_dps = SelectedToKFunction (_, dps)
 		esta_barra.ps_text = formated_dps
 
+		local formatted_overall_damage, formatted_overall_dps, rightText
+		local overall_percents = porcentagem
+
+		if (instancia.segmento == 0 and bars_show_data[4]) then	
+			local added = false
+			local overall_damage = damage_total
+			local current_combat = Details:GetCurrentCombat()
+			local overall_dps, current_top
+			local overall_top = self
+
+			if current_combat.overall_added or (current_combat:IsMythicDungeon() and current_combat:IsMythicDungeonOverall()) then
+				added = true
+			end
+
+			local overall_combat = Details:GetCombat("overall")
+
+			if overall_combat then
+				local overall_combat_damage_actor = overall_combat:GetActor(DETAILS_ATTRIBUTE_DAMAGE, self.nome)
+				local overall_time = overall_combat:GetCombatTime()
+				local overall_total = overall_combat:GetTotal(DETAILS_ATTRIBUTE_DAMAGE, DETAILS_SUBATTRIBUTE_DAMAGEDONE, DETAILS_TOTALS_ONLYGROUP)
+
+				if overall_total ~= 0 then
+					for i, actor in ipairs (overall_combat:GetActorList(DETAILS_ATTRIBUTE_DAMAGE)) do
+						if (actor.total > overall_top.total) then
+							overall_top = actor
+						end
+					end
+
+					if overall_top.serial == self.serial then
+						current_top = self.total
+					else			
+						current_top = current_combat:GetActor(DETAILS_ATTRIBUTE_DAMAGE, overall_top.nome)
+
+						if current_top then
+							current_top = current_top.total
+						else
+							current_top = 0
+						end
+					end
+
+					if overall_combat_damage_actor and added then
+						overall_damage = overall_combat_damage_actor.total
+						overall_dps = overall_damage / overall_time
+						overall_top = overall_top.total
+					elseif overall_combat_damage_actor and not added then
+						overall_damage = overall_combat_damage_actor.total + damage_total
+						overall_dps = overall_damage / (overall_time + combat_time)
+						overall_total = overall_total + total
+						overall_top = current_top + overall_top.total							
+					end
+
+					if (percentage_type == 1) then
+						overall_percents = _math_floor(overall_damage / overall_total * 100)
+					elseif (percentage_type == 2) then				
+						overall_percents = _math_floor(overall_damage / overall_top * 100)
+					end
+				end
+			end
+
+			if not overall_dps then
+				overall_dps = dps
+			else
+				overall_dps = _math_floor(overall_dps)
+			end
+
+			formatted_overall_dps = SelectedToKFunction(_, overall_dps)
+			formatted_overall_damage = SelectedToKFunction(_, overall_damage)
+		end
+
 		if (not bars_show_data [1]) then
 			formated_damage = ""
+			formatted_overall_damage = ""
 		end
 		if (not bars_show_data [2]) then
 			formated_dps = ""
+			formatted_overall_dps = ""
 		end
 		if (not bars_show_data [3]) then
 			porcentagem = ""
+			overall_percents = ""
 		else
 			porcentagem = porcentagem .. "%"
+			overall_percents = overall_percents .. "%"
+		end
+
+		rightText = formated_damage .. bars_brackets[1] .. formated_dps .. bars_separator .. porcentagem .. bars_brackets[2]
+
+		if (instancia.segmento == 0 and bars_show_data[4]) then	
+			rightText = rightText .. bars_separator .. formatted_overall_damage .. bars_brackets[1] .. formatted_overall_dps .. bars_separator .. overall_percents .. bars_brackets[2]
 		end
 		
-		local rightText = formated_damage .. bars_brackets[1] .. formated_dps .. bars_separator .. porcentagem .. bars_brackets[2]
 		if (UsingCustomRightText) then
-			esta_barra.texto_direita:SetText (_string_replace (instancia.row_info.textR_custom_text, formated_damage, formated_dps, porcentagem, self, instancia.showing, instancia, rightText))
+			if (instancia.segmento == 0 and bars_show_data[4]) then
+				esta_barra.texto_direita:SetText (_string_replace_overall (instancia.row_info.textOverallR_custom_text, formated_damage, formatted_overall_damage, formated_dps, formatted_overall_dps, porcentagem, overall_percents, self, instancia.showing, instancia, rightText))
+			else
+				esta_barra.texto_direita:SetText (_string_replace (instancia.row_info.textR_custom_text, formated_damage, formated_dps, porcentagem, self, instancia.showing, instancia, rightText))
+			end
 		else
 			esta_barra.texto_direita:SetText (rightText)
 		end
 		
 		esta_porcentagem = _math_floor ((damage_total/instancia.top) * 100)
-
 	elseif (sub_atributo == 2) then --> mostrando dps
 	
 		local raw_dps = dps
@@ -2586,13 +2666,12 @@ function atributo_damage:AtualizaBarra (instancia, barras_container, qual_barra,
 	end
 	
 	actor_class_color_r, actor_class_color_g, actor_class_color_b = self:GetBarColor()
-	
+
 	return self:RefreshBarra2 (esta_barra, instancia, tabela_anterior, forcar, esta_porcentagem, qual_barra, barras_container, use_animations)
 
 end
 
 --[[ exported]] function _detalhes:RefreshBarra2 (esta_barra, instancia, tabela_anterior, forcar, esta_porcentagem, qual_barra, barras_container, use_animations)
-	
 	--> primeiro colocado
 	if (esta_barra.colocacao == 1) then
 		--aqui
